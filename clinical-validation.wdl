@@ -34,9 +34,8 @@ workflow ClinicalValidation {
         File callVcfIndex
         String? sample
         String outputDir = "."
-        File highConfidenceIntervals
-
-
+        File? highConfidenceIntervals
+        File? regions
     }
 
     call gatk.SelectVariants as selectSNPsCall {
@@ -48,7 +47,54 @@ workflow ClinicalValidation {
             inputVcfIndex = callVcfIndex,
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/calledSnps.vcf.gz",
-            intervals = [highConfidenceIntervals]
+            intervals = select_all([highConfidenceIntervals])
+    }
+
+    call gatk.SelectVariants as selectIndelsCall {
+        input:
+            referenceFasta = referenceFasta,
+            referenceFastaFai = referenceFastaFai,
+            referenceFastaDict = referenceFastaDict,
+            inputVcf = callVcf,
+            inputVcfIndex = callVcfIndex,
+            selectTypeToInclude = "INDEL",
+            outputPath = outputDir + "/calledSnps.vcf.gz",
+            intervals = select_all([highConfidenceIntervals])
+    }
+
+    call rtg.Format as formatReference {
+        input:
+            inputFiles = [referenceFasta],
+            outputPath = outputDir + "/reference.sdf"
+    }
+
+    call rtg.VcfEval as evalSNPs {
+        input:
+            baseline = baselineVcf,
+            baselineIndex = baselineVcfIndex,
+            calls = selectSNPsCall.outputVcf,
+            callsIndex = selectSNPsCall.outputVcfIndex,
+            outputDir = outputDir + "/evalSNPs/",
+            allRecords = true,
+            decompose = true,
+            bedRegions = regions
+    }
+
+    call rtg.VcfEval as evalIndels {
+        input:
+            baseline = baselineVcf,
+            baselineIndex = baselineVcfIndex,
+            calls = selectIndelsCall.outputVcf,
+            callsIndex = selectIndelsCall.outputVcfIndex,
+            outputDir = outputDir + "/evalIndels/",
+            allRecords = true,
+            decompose = true,
+            bedRegions = regions
+    }
+
+    output {
+        File indelSummary = evalIndels.summary
+        File SNPSummary = evalSNPs.summary
     }
 
     parameter_meta {
