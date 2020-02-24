@@ -33,11 +33,23 @@ workflow ClinicalValidation {
         File callVcf
         File callVcfIndex
         String? sample
+        String outputDir = "."
+        File highConfidenceIntervals
 
 
     }
 
-    call
+    call gatk.SelectVariants as selectSNPsCall {
+        input:
+            referenceFasta = referenceFasta,
+            referenceFastaFai = referenceFastaFai,
+            referenceFastaDict = referenceFastaDict,
+            inputVcf = callVcf,
+            inputVcfIndex = callVcfIndex,
+            selectTypeToInclude = "SNP",
+            outputPath = outputDir + "/calledSnps.vcf.gz",
+            intervals = [highConfidenceIntervals]
+    }
 
     parameter_meta {
         referenceFasta: { description: "The reference fasta file", category: "required" }
