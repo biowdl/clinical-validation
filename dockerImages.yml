@@ -1,0 +1,11 @@
+---
+# This file contains the docker images used in the pipeline.
+# The containers used by default are biocontainers uploaded on quay.io.
+# https://quay.io/organization/biocontainers
+
+# The string should be formatted in the same way as utilized in a 'docker pull'
+# command.
+
+# Tools are sorted alphabetically for ease of use.
+
+gatk4: "quay.io/biocontainers/gatk4:4.1.2.0--1"
