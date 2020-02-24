@@ -75,9 +75,11 @@ workflow ClinicalValidation {
             calls = selectSNPsCall.outputVcf,
             callsIndex = selectSNPsCall.outputVcfIndex,
             outputDir = outputDir + "/evalSNPs/",
+            template = formatReference.sdf,
             allRecords = true,
             decompose = true,
-            bedRegions = regions
+            bedRegions = regions,
+            sample = sample
     }
 
     call rtg.VcfEval as evalIndels {
@@ -87,9 +89,11 @@ workflow ClinicalValidation {
             calls = selectIndelsCall.outputVcf,
             callsIndex = selectIndelsCall.outputVcfIndex,
             outputDir = outputDir + "/evalIndels/",
+            template = formatReference.sdf,
             allRecords = true,
             decompose = true,
-            bedRegions = regions
+            bedRegions = regions,
+            sample = sample
     }
 
     output {
