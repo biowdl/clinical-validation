@@ -38,6 +38,12 @@ workflow ClinicalValidation {
         String outputDir = "."
         File? highConfidenceIntervals
         File? regions
+        Map[String, String] dockerImages = {
+            "gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1",
+            "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
+            "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
+            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
+        }
     }
 
     # Normalize and decompose the call vcf. Otherwise select variants will
@@ -48,14 +54,16 @@ workflow ClinicalValidation {
             inputVCFIndex = callVcfIndex,
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
-            outputPath = "normalizedCalls.vcf"
+            outputPath = "normalizedCalls.vcf",
+            dockerImage = dockerImages["vt"]
     }
 
     call samtools.BgzipAndIndex as indexCallVcf {
         input:
             inputFile = normalizeAndDecompose.outputVcf,
             outputDir = outputDir,
-            type = "vcf"
+            type = "vcf",
+            dockerImage = dockerImages["tabix"]
     }
 
 
@@ -68,7 +76,8 @@ workflow ClinicalValidation {
             inputVcfIndex = indexCallVcf.index,
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/calledSnps.vcf.gz",
-            intervals = select_all([highConfidenceIntervals])
+            intervals = select_all([highConfidenceIntervals]),
+            dockerImage = dockerImages["gatk4"]
     }
 
     call gatk.SelectVariants as selectIndelsCall {
@@ -80,7 +89,8 @@ workflow ClinicalValidation {
             inputVcfIndex = indexCallVcf.index,
             selectTypeToInclude = "INDEL",
             outputPath = outputDir + "/calledIndels.vcf.gz",
-            intervals = select_all([highConfidenceIntervals])
+            intervals = select_all([highConfidenceIntervals]),
+            dockerImage = dockerImages["gatk4"]
     }
 
     call gatk.SelectVariants as selectSNPsBaseline {
@@ -92,7 +102,8 @@ workflow ClinicalValidation {
             inputVcfIndex = baselineVcfIndex,
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/baselineSnps.vcf.gz",
-            intervals = select_all([highConfidenceIntervals])
+            intervals = select_all([highConfidenceIntervals]),
+            dockerImage = dockerImages["gatk4"]
     }
 
     call gatk.SelectVariants as selectIndelsBaseline {
@@ -104,13 +115,15 @@ workflow ClinicalValidation {
             inputVcfIndex = baselineVcfIndex,
             selectTypeToInclude = "INDEL",
             outputPath = outputDir + "/baselineIndels.vcf.gz",
-            intervals = select_all([highConfidenceIntervals])
+            intervals = select_all([highConfidenceIntervals]),
+            dockerImage = dockerImages["gatk4"]
     }
 
     call rtg.Format as formatReference {
         input:
             inputFiles = [referenceFasta],
-            outputPath = outputDir + "/reference.sdf"
+            outputPath = outputDir + "/reference.sdf",
+            dockerImage = dockerImages["rtg-tools"]
     }
 
     call rtg.VcfEval as evalSNPs {
@@ -123,7 +136,8 @@ workflow ClinicalValidation {
             template = formatReference.sdf,
             allRecords = true,
             bedRegions = regions,
-            sample = sample
+            sample = sample,
+            dockerImage = dockerImages["rtg-tools"]
     }
 
     call rtg.VcfEval as evalIndels {
@@ -136,7 +150,8 @@ workflow ClinicalValidation {
             template = formatReference.sdf,
             allRecords = true,
             bedRegions = regions,
-            sample = sample
+            sample = sample,
+            dockerImage = dockerImages["rtg-tools"]
     }
 
     output {
