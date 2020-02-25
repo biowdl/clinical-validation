@@ -5,6 +5,6 @@
   "ClinicalValidation.baselineVcf": "tests/data/expected.vcf.gz",
   "ClinicalValidation.baselineVcfIndex": "tests/data/expected.vcf.gz.tbi",
   "ClinicalValidation.callVcf": "tests/data/multisample.vcf.gz",
-  "ClinicalValidation.callVcfIndex": "tests/datamultisample.vcf.gz.tbi",
+  "ClinicalValidation.callVcfIndex": "tests/data/multisample.vcf.gz.tbi",
   "ClinicalValidation.sample": "male"
 }
