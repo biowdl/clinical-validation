@@ -22,6 +22,8 @@ version 1.0
 
 import "tasks/gatk.wdl" as gatk
 import "tasks/rtg.wdl" as rtg
+import "tasks/samtools.wdl" as samtools
+import "tasks/vt.wdl" as vt
 
 workflow ClinicalValidation {
     input {
@@ -38,13 +40,32 @@ workflow ClinicalValidation {
         File? regions
     }
 
+    # Normalize and decompose the call vcf. Otherwise select variants will
+    # not work properly
+    call vt.Normalize as normalizeAndDecompose {
+        input:
+            inputVCF = callVcf,
+            inputVCFIndex = callVcfIndex,
+            referenceFasta = referenceFasta,
+            referenceFastaFai = referenceFastaFai,
+            outputPath = "normalizedCalls.vcf"
+    }
+
+    call samtools.BgzipAndIndex as indexCallVcf {
+        input:
+            inputFile = normalizeAndDecompose.outputVcf,
+            outputDir = outputDir,
+            type = "vcf"
+    }
+
+
     call gatk.SelectVariants as selectSNPsCall {
         input:
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = callVcf,
-            inputVcfIndex = callVcfIndex,
+            inputVcf = indexCallVcf.compressed,
+            inputVcfIndex = indexCallVcf.index,
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/calledSnps.vcf.gz",
             intervals = select_all([highConfidenceIntervals])
@@ -55,10 +76,34 @@ workflow ClinicalValidation {
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = callVcf,
-            inputVcfIndex = callVcfIndex,
+            inputVcf = indexCallVcf.compressed,
+            inputVcfIndex = indexCallVcf.index,
             selectTypeToInclude = "INDEL",
-            outputPath = outputDir + "/calledSnps.vcf.gz",
+            outputPath = outputDir + "/calledIndels.vcf.gz",
+            intervals = select_all([highConfidenceIntervals])
+    }
+
+    call gatk.SelectVariants as selectSNPsBaseline {
+        input:
+            referenceFasta = referenceFasta,
+            referenceFastaFai = referenceFastaFai,
+            referenceFastaDict = referenceFastaDict,
+            inputVcf = baselineVcf,
+            inputVcfIndex = baselineVcfIndex,
+            selectTypeToInclude = "SNP",
+            outputPath = outputDir + "/baselineSnps.vcf.gz",
+            intervals = select_all([highConfidenceIntervals])
+    }
+
+    call gatk.SelectVariants as selectIndelsBaseline {
+        input:
+            referenceFasta = referenceFasta,
+            referenceFastaFai = referenceFastaFai,
+            referenceFastaDict = referenceFastaDict,
+            inputVcf = baselineVcf,
+            inputVcfIndex = baselineVcfIndex,
+            selectTypeToInclude = "INDEL",
+            outputPath = outputDir + "/baselineIndels.vcf.gz",
             intervals = select_all([highConfidenceIntervals])
     }
 
@@ -70,28 +115,26 @@ workflow ClinicalValidation {
 
     call rtg.VcfEval as evalSNPs {
         input:
-            baseline = baselineVcf,
-            baselineIndex = baselineVcfIndex,
+            baseline = selectSNPsBaseline.outputVcf,
+            baselineIndex = selectSNPsBaseline.outputVcfIndex,
             calls = selectSNPsCall.outputVcf,
             callsIndex = selectSNPsCall.outputVcfIndex,
             outputDir = outputDir + "/evalSNPs/",
             template = formatReference.sdf,
             allRecords = true,
-            decompose = true,
             bedRegions = regions,
             sample = sample
     }
 
     call rtg.VcfEval as evalIndels {
         input:
-            baseline = baselineVcf,
-            baselineIndex = baselineVcfIndex,
+            baseline = selectIndelsBaseline.outputVcf,
+            baselineIndex = selectIndelsBaseline.outputVcfIndex,
             calls = selectIndelsCall.outputVcf,
             callsIndex = selectIndelsCall.outputVcfIndex,
             outputDir = outputDir + "/evalIndels/",
             template = formatReference.sdf,
             allRecords = true,
-            decompose = true,
             bedRegions = regions,
             sample = sample
     }
@@ -99,6 +142,18 @@ workflow ClinicalValidation {
     output {
         File indelSummary = evalIndels.summary
         File SNPSummary = evalSNPs.summary
+        File indelVcf = selectIndelsCall.outputVcf
+        File indelVcfIndex = selectIndelsCall.outputVcfIndex
+        File SNPVcf = selectSNPsCall.outputVcf
+        File SNPVcfIndex = selectSNPsCall.outputVcfIndex
+
+        File normalizedVcf = indexCallVcf.compressed
+        File normalizedVcfIndex = indexCallVcf.index
+
+        File BaselineIndelVcf = selectIndelsBaseline.outputVcf
+        File BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
+        File BaselineSNPVcf = selectSNPsBaseline.outputVcf
+        File BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
     }
 
     parameter_meta {
