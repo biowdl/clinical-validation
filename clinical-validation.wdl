@@ -155,8 +155,8 @@ workflow ClinicalValidation {
     }
 
     output {
-        File indelSummary = evalIndels.summary
-        File SNPSummary = evalSNPs.summary
+        Array[File] indelStats = evalIndels.allStats
+        Array[File] SNPStats = evalSNPs.allStats
         File indelVcf = selectIndelsCall.outputVcf
         File indelVcfIndex = selectIndelsCall.outputVcfIndex
         File SNPVcf = selectSNPsCall.outputVcf
