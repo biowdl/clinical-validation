@@ -1,4 +1,6 @@
 - name: malesample
+  tags:
+    - integration
   command: >-
     cromwell run -o tests/cromwell_options.json
     -i tests/integration/malesample.json clinical-validation.wdl
