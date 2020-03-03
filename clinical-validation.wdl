@@ -173,7 +173,7 @@ workflow ClinicalValidation {
 
     parameter_meta {
         referenceFasta: { description: "The reference fasta file", category: "required" }
-        referenceFastaFai: { description: "Fasta index (.fai) file of the reference", category: "required" }
+        referenceFastaFai: { description: "Fasta index (.fai) file of the reference.", category: "required" }
         referenceFastaDict: { description: "Sequence dictionary (.dict) file of the reference", category: "required" }
         baselineVcf: {description: "The baseline VCF that contains the true variants", category: "required"}
         baselineVcfIndex: {description: "The baseline VCF's index", category: "required"}
