@@ -174,17 +174,17 @@ workflow ClinicalValidation {
     parameter_meta {
         referenceFasta: { description: "The reference fasta file", category: "required" }
         referenceFastaFai: { description: "Fasta index (.fai) file of the reference.", category: "required" }
-        referenceFastaDict: { description: "Sequence dictionary (.dict) file of the reference", category: "required" }
-        baselineVcf: {description: "The baseline VCF that contains the true variants", category: "required"}
-        baselineVcfIndex: {description: "The baseline VCF's index", category: "required"}
-        callVcf: {description: "The sample VCF file", category: "required"}
-        callVcfIndex: {description: "The sample VCF's index", category: "required"}
-        sample: {description:  "the name of the sample to select. Use <baseline_sample>,<calls_sample> to select different sample names for baseline and calls. (Required when using multi-sample VCF files)",
+        referenceFastaDict: { description: "Sequence dictionary (.dict) file of the reference.", category: "required" }
+        baselineVcf: {description: "The baseline VCF that contains the true variants.", category: "required"}
+        baselineVcfIndex: {description: "The baseline VCF's index.", category: "required"}
+        callVcf: {description: "The sample VCF file.", category: "required"}
+        callVcfIndex: {description: "The sample VCF's index.", category: "required"}
+        sample: {description:  "the name of the sample to select. Use <baseline_sample>,<calls_sample> to select different sample names for baseline and calls. (Required when using multi-sample VCF files.)",
         category: "common"}
-        outputDir: {description: "Where the output files will be placed", category: "advanced"}
-        highConfidenceIntervals: {description: "Only select SNPs from these intervals for comparison. Useful for Genome In A Bottle samples",
+        outputDir: {description: "Where the output files will be placed.", category: "advanced"}
+        highConfidenceIntervals: {description: "Only select SNPs from these intervals for comparison. Useful for Genome In A Bottle samples.",
                                   category: "common" }
-        regions: {description: "perform rtg vcfeval on these regions", category: "common"}
+        regions: {description: "perform rtg vcfeval on these regions.", category: "common"}
         dockerImages: {description: "The docker images used.", category: "required"}
     }
 }
