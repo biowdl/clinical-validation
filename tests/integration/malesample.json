@@ -1,0 +1,10 @@
+{
+  "ClinicalValidation.referenceFasta": "tests/data/reference.fasta",
+  "ClinicalValidation.referenceFastaFai": "tests/data/reference.fasta.fai",
+  "ClinicalValidation.referenceFastaDict": "tests/data/reference.dict",
+  "ClinicalValidation.baselineVcf": "tests/data/expected.vcf.gz",
+  "ClinicalValidation.baselineVcfIndex": "tests/data/expected.vcf.gz.tbi",
+  "ClinicalValidation.callVcf": "tests/data/multisample.vcf.gz",
+  "ClinicalValidation.callVcfIndex": "tests/data/multisample.vcf.gz.tbi",
+  "ClinicalValidation.sample": "male"
+}

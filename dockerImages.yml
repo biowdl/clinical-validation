@@ -8,4 +8,7 @@
 
 # Tools are sorted alphabetically for ease of use.
 
-gatk4: "quay.io/biocontainers/gatk4:4.1.2.0--1"
+"gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1"
+"vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2"
+"tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0"
+"rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
