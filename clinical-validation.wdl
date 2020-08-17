@@ -195,7 +195,7 @@ workflow ClinicalValidation {
         referenceFastaFai: { description: "Fasta index (.fai) file of the reference.", category: "required" }
         referenceFastaDict: { description: "Sequence dictionary (.dict) file of the reference.", category: "required" }
         baselineVcf: {description: "The baseline VCF that contains the true variants.", category: "required"}
-        baselineVcfIndex: {description: "The baseline VCF's index.", category: "required"}
+        baselineVcfIndex: {description: "The baseline VCF's index.", category: "common"}
         callVcf: {description: "The sample VCF file.", category: "required"}
         callVcfIndex: {description: "The sample VCF's index.", category: "required"}
         sample: {description:  "the name of the sample to select. Use <baseline_sample>,<calls_sample> to select different sample names for baseline and calls. (Required when using multi-sample VCF files.)",
