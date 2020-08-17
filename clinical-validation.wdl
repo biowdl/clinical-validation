@@ -60,7 +60,7 @@ workflow ClinicalValidation {
                 inputFile = unit.callVcf
         }
 
-        # Normalise and decompose the baseline vcf.
+        # Normalize and decompose the baseline vcf.
         call vt.Normalize as normalizeAndDecomposeBaseline {
             input:
                 inputVCF = indexBaseline.indexedFile,
@@ -73,7 +73,7 @@ workflow ClinicalValidation {
 
         call samtools.BgzipAndIndex as indexBaselineVcf {
             input:
-                inputFile = normalizeAndDecompose.outputVcf,
+                inputFile = normalizeAndDecomposeBaseline.outputVcf,
                 outputDir = unit.outputPrefix,
                 type = "vcf",
                 dockerImage = dockerImages["tabix"]
@@ -81,7 +81,7 @@ workflow ClinicalValidation {
 
         # Normalize and decompose the call vcf. Otherwise select variants will
         # not work properly
-        call vt.Normalize as normalizeAndDecompose {
+        call vt.Normalize as normalizeAndDecomposeCall {
             input:
                 inputVCF = indexCall.indexedFile,
                 inputVCFIndex = indexCall.index,
@@ -93,7 +93,7 @@ workflow ClinicalValidation {
 
         call samtools.BgzipAndIndex as indexCallVcf {
             input:
-                inputFile = normalizeAndDecompose.outputVcf,
+                inputFile = normalizeAndDecomposeCall.outputVcf,
                 outputDir = unit.outputPrefix,
                 type = "vcf",
                 dockerImage = dockerImages["tabix"]
