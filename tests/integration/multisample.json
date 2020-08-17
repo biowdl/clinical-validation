@@ -2,6 +2,7 @@
   "ClinicalValidation.referenceFasta": "tests/data/reference.fasta",
   "ClinicalValidation.referenceFastaFai": "tests/data/reference.fasta.fai",
   "ClinicalValidation.referenceFastaDict": "tests/data/reference.dict",
+  "ClinicalValidation.allRecords": true,
   "ClinicalValidation.validationUnit": [
     {
           "callVcf": "tests/data/multisample.vcf.gz",

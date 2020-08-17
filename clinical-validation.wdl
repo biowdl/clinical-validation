@@ -46,6 +46,7 @@ workflow ClinicalValidation {
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
             "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
         }
+        Boolean allRecords = false
     }
 
     scatter (unit in validationUnit) {
@@ -166,7 +167,7 @@ workflow ClinicalValidation {
                 callsIndex = selectSNPsCall.outputVcfIndex,
                 outputDir = unit.outputPrefix + "/evalSNPs/",
                 template = formatReference.sdf,
-                allRecords = true,
+                allRecords = allRecords,
                 bedRegions = regions,
                 sample = unit.sampleNameVcf,
                 dockerImage = dockerImages["rtg-tools"]
@@ -180,7 +181,7 @@ workflow ClinicalValidation {
                 callsIndex = selectIndelsCall.outputVcfIndex,
                 outputDir = unit.outputPrefix + "/evalIndels/",
                 template = formatReference.sdf,
-                allRecords = true,
+                allRecords = allRecords,
                 bedRegions = regions,
                 sample = unit.sampleNameVcf,
                 dockerImage = dockerImages["rtg-tools"]
@@ -213,7 +214,8 @@ workflow ClinicalValidation {
         category: "common"}
         highConfidenceIntervals: {description: "Only select SNPs from these intervals for comparison. Useful for Genome In A Bottle samples.",
                                   category: "common" }
-        regions: {description: "perform rtg vcfeval on these regions.", category: "common"}
+        allRecords: {description: "Use all VCF records regardless of FILTER status.", category: "common"}
+        regions: {description: "Perform rtg vcfeval on these regions.", category: "common"}
         dockerImages: {description: "The docker images used.", category: "required"}
     }
 }
