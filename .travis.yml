@@ -45,6 +45,6 @@ matrix:
       after_failure:
         - echo "Linting failed"
     - env: TEST="womtool-malesample"
-    - env: TEST="womtool-no-baseline-index"
     - env: TEST="malesample"
-    - env: TEST="no-baseline-index"
+    - env: TEST="two-samples"
+    - env: TEST="no-samplenameVcf"
