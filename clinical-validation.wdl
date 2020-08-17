@@ -55,6 +55,16 @@ workflow ClinicalValidation {
         }
     }
 
+    # Here we do some mangling to get the correct VCF and index files together,
+    # depending on wether an index was specified
+    File baselineVCF = if defined(baselineVcfIndex) then
+                       baselineVcf else
+                       select_first([indexBaseline.indexedFile])
+
+    File baselineVCFIndex = if defined(baselineVcfIndex) then
+                            select_first([baselineVcfIndex]) else
+                            select_first([indexBaseline.index])
+
     # Normalize and decompose the call vcf. Otherwise select variants will
     # not work properly
     call vt.Normalize as normalizeAndDecompose {
@@ -107,12 +117,8 @@ workflow ClinicalValidation {
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = if defined(baselineVcfIndex) then
-                            baselineVcf else
-                            select_first([indexBaseline.indexedFile]),
-            inputVcfIndex = if defined(baselineVcfIndex) then
-                                select_first([baselineVcfIndex]) else
-                                select_first([indexBaseline.index]),
+            inputVcf = baselineVCF,
+            inputVcfIndex = baselineVCFIndex,
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/baselineSnps.vcf.gz",
             intervals = select_all([highConfidenceIntervals]),
@@ -124,12 +130,8 @@ workflow ClinicalValidation {
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = if defined(baselineVcfIndex) then
-                            baselineVcf else
-                            select_first([indexBaseline.indexedFile]),
-            inputVcfIndex = if defined(baselineVcfIndex) then
-                                select_first([baselineVcfIndex]) else
-                                select_first([indexBaseline.index]),
+            inputVcf = baselineVCF,
+            inputVcfIndex = baselineVCFIndex,
             selectTypeToInclude = "INDEL",
             outputPath = outputDir + "/baselineIndels.vcf.gz",
             intervals = select_all([highConfidenceIntervals]),
