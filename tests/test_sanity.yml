@@ -7,13 +7,3 @@
   stdout:
     contains:
       - "Success!"
-
-- name: womtool-no-baseline-index
-  tags:
-    - sanity
-  command: >-
-    womtool validate --inputs tests/integration/no_baseline_index.json
-    clinical-validation.wdl
-  stdout:
-    contains:
-      - "Success!"
