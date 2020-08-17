@@ -31,7 +31,7 @@ workflow ClinicalValidation {
         File referenceFastaFai
         File referenceFastaDict
         File baselineVcf
-        File baselineVcfIndex
+        File? baselineVcfIndex
         File callVcf
         File callVcfIndex
         String? sample
@@ -43,6 +43,15 @@ workflow ClinicalValidation {
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
             "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
+        }
+    }
+
+    # The index for the baseline is optional, so if it is not specified we need
+    # to index the VCF file here
+    if (!defined(baselineVcfIndex)) {
+        call samtools.Tabix as indexBaseline {
+            input:
+                inputFile = baselineVcf
         }
     }
 
@@ -98,8 +107,12 @@ workflow ClinicalValidation {
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = baselineVcf,
-            inputVcfIndex = baselineVcfIndex,
+            inputVcf = if defined(baselineVcfIndex) then
+                            baselineVcf else
+                            select_first([indexBaseline.indexedFile]),
+            inputVcfIndex = if defined(baselineVcfIndex) then
+                                select_first([baselineVcfIndex]) else
+                                select_first([indexBaseline.index]),
             selectTypeToInclude = "SNP",
             outputPath = outputDir + "/baselineSnps.vcf.gz",
             intervals = select_all([highConfidenceIntervals]),
@@ -111,8 +124,12 @@ workflow ClinicalValidation {
             referenceFasta = referenceFasta,
             referenceFastaFai = referenceFastaFai,
             referenceFastaDict = referenceFastaDict,
-            inputVcf = baselineVcf,
-            inputVcfIndex = baselineVcfIndex,
+            inputVcf = if defined(baselineVcfIndex) then
+                            baselineVcf else
+                            select_first([indexBaseline.indexedFile]),
+            inputVcfIndex = if defined(baselineVcfIndex) then
+                                select_first([baselineVcfIndex]) else
+                                select_first([indexBaseline.index]),
             selectTypeToInclude = "INDEL",
             outputPath = outputDir + "/baselineIndels.vcf.gz",
             intervals = select_all([highConfidenceIntervals]),

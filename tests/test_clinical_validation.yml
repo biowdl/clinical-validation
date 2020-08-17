@@ -9,3 +9,15 @@
     - path: test-output/calledSnps.vcf.gz
     - path: test-output/evalIndels/summary.txt
     - path: test-output/evalSNPs/summary.txt
+
+- name: no-baseline-index
+  tags:
+    - integration
+  command: >-
+    cromwell run -o tests/cromwell_options.json
+    -i tests/integration/no_baseline_index.json clinical-validation.wdl
+  files:
+    - path: test-output/calledIndels.vcf.gz
+    - path: test-output/calledSnps.vcf.gz
+    - path: test-output/evalIndels/summary.txt
+    - path: test-output/evalSNPs/summary.txt
