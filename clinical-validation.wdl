@@ -216,6 +216,7 @@ workflow ClinicalValidation {
                                   category: "common" }
         allRecords: {description: "Use all VCF records regardless of FILTER status.", category: "common"}
         regions: {description: "Perform rtg vcfeval on these regions.", category: "common"}
+        validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "required"}
     }
 }
