@@ -59,6 +59,25 @@ workflow ClinicalValidation {
                 inputFile = unit.callVcf
         }
 
+        # Normalise and decompose the baseline vcf.
+        call vt.Normalize as normalizeAndDecomposeBaseline {
+            input:
+                inputVCF = indexBaseline.indexedFile,
+                inputVCFIndex = indexBaseline.index,
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf",
+                dockerImage = dockerImages["vt"]
+        }
+
+        call samtools.BgzipAndIndex as indexBaselineVcf {
+            input:
+                inputFile = normalizeAndDecompose.outputVcf,
+                outputDir = unit.outputPrefix,
+                type = "vcf",
+                dockerImage = dockerImages["tabix"]
+        }
+
         # Normalize and decompose the call vcf. Otherwise select variants will
         # not work properly
         call vt.Normalize as normalizeAndDecompose {
@@ -111,8 +130,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexBaseline.indexedFile,
-                inputVcfIndex = indexBaseline.index,
+                inputVcf = indexBaselineVcf.compressed,
+                inputVcfIndex = indexBaselineVcf.index,
                 selectTypeToInclude = "SNP",
                 outputPath = unit.outputPrefix + "/baselineSnps.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -124,8 +143,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexBaseline.indexedFile,
-                inputVcfIndex = indexBaseline.index,
+                inputVcf = indexBaselineVcf.compressed,
+                inputVcfIndex = indexBaselineVcf.index,
                 selectTypeToInclude = "INDEL",
                 outputPath = unit.outputPrefix + "/baselineIndels.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
