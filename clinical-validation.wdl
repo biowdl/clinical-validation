@@ -91,7 +91,7 @@ workflow ClinicalValidation {
                 dockerImage = dockerImages["vt"]
         }
 
-        call samtools.BgzipAndIndex as indexCallVcf {
+        call samtools.BgzipAndIndex as indexNormalizedCall{
             input:
                 inputFile = normalizeAndDecomposeCall.outputVcf,
                 outputDir = unit.outputPrefix,
@@ -105,8 +105,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexCallVcf.compressed,
-                inputVcfIndex = indexCallVcf.index,
+                inputVcf = indexNormalizedCall.compressed,
+                inputVcfIndex = indexNormalizedCall.index,
                 selectTypeToInclude = "SNP",
                 outputPath = unit.outputPrefix + "/calledSnps.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -118,8 +118,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexCallVcf.compressed,
-                inputVcfIndex = indexCallVcf.index,
+                inputVcf = indexNormalizedCall.compressed,
+                inputVcfIndex = indexNormalizedCall.index,
                 selectTypeToInclude = "INDEL",
                 outputPath = unit.outputPrefix + "/calledIndels.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -189,15 +189,15 @@ workflow ClinicalValidation {
     }
 
     output {
-        Array[Array[File]] indelStats = evalIndels.allStats
-        Array[Array[File]] SNPStats = evalSNPs.allStats
+        Array[File] indelStats = flatten(evalIndels.allStats)
+        Array[File] SNPStats = flatten(evalSNPs.allStats)
         Array[File] indelVcf = selectIndelsCall.outputVcf
         Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
         Array[File] SNPVcf = selectSNPsCall.outputVcf
         Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
-        Array[File] normalizedVcf = indexCallVcf.compressed
-        Array[File] normalizedVcfIndex = indexCallVcf.index
+        Array[File] normalizedVcf = indexNormalizedCall.compressed
+        Array[File] normalizedVcfIndex = indexNormalizedCall.index
 
         Array[File] BaselineIndelVcf = selectIndelsBaseline.outputVcf
         Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
