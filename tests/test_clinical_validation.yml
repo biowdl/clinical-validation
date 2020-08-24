@@ -43,3 +43,10 @@
     - path: test-output/sample-output/calledSnps.vcf.gz
     - path: test-output/sample-output/evalIndels/summary.txt
     - path: test-output/sample-output/evalSNPs/summary.txt
+
+- name: ignore-masked-ref
+  tags:
+    - integration
+  command: >-
+    cromwell run -o tests/cromwell_options.json
+    -i tests/integration/ignoreMaskedRef.json clinical-validation.wdl

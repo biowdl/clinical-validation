@@ -7,3 +7,13 @@
   stdout:
     contains:
       - "Success!"
+
+- name: womtool-ignore-masked-ref
+  tags:
+    - sanity
+  command: >-
+    womtool validate --inputs tests/integration/ignoreMaskedRef.json
+    clinical-validation.wdl
+  stdout:
+    contains:
+      - "Success!"
