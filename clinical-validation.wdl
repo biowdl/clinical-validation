@@ -37,6 +37,7 @@ workflow ClinicalValidation {
         File referenceFasta
         File referenceFastaFai
         File referenceFastaDict
+        Boolean ignoreMaskedRef = false
         Array[ValidationUnit]+ validationUnit
         File? highConfidenceIntervals
         File? regions
@@ -68,6 +69,7 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf",
+                ignoreMaskedRef = ignoreMaskedRef,
                 dockerImage = dockerImages["vt"]
         }
 
