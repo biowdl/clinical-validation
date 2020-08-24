@@ -25,17 +25,19 @@ import "tasks/rtg.wdl" as rtg
 import "tasks/samtools.wdl" as samtools
 import "tasks/vt.wdl" as vt
 
+struct ValidationUnit {
+    File callVcf
+    File baselineVcf
+    String outputPrefix
+    String? sampleNameVcf
+}
+
 workflow ClinicalValidation {
     input {
         File referenceFasta
         File referenceFastaFai
         File referenceFastaDict
-        File baselineVcf
-        File baselineVcfIndex
-        File callVcf
-        File callVcfIndex
-        String? sample
-        String outputDir = "."
+        Array[ValidationUnit]+ validationUnit
         File? highConfidenceIntervals
         File? regions
         Map[String, String] dockerImages = {
@@ -44,147 +46,177 @@ workflow ClinicalValidation {
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
             "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
         }
+        Boolean allRecords = false
     }
 
-    # Normalize and decompose the call vcf. Otherwise select variants will
-    # not work properly
-    call vt.Normalize as normalizeAndDecompose {
-        input:
-            inputVCF = callVcf,
-            inputVCFIndex = callVcfIndex,
-            referenceFasta = referenceFasta,
-            referenceFastaFai = referenceFastaFai,
-            outputPath = "normalizedCalls.vcf",
-            dockerImage = dockerImages["vt"]
-    }
+    scatter (unit in validationUnit) {
+        # Index the VCF files
+        call samtools.Tabix as indexBaseline {
+            input:
+                inputFile = unit.baselineVcf
+        }
+        call samtools.Tabix as indexCall {
+            input:
+                inputFile = unit.callVcf
+        }
 
-    call samtools.BgzipAndIndex as indexCallVcf {
-        input:
-            inputFile = normalizeAndDecompose.outputVcf,
-            outputDir = outputDir,
-            type = "vcf",
-            dockerImage = dockerImages["tabix"]
-    }
+        # Normalize and decompose the baseline vcf.
+        call vt.Normalize as normalizeAndDecomposeBaseline {
+            input:
+                inputVCF = indexBaseline.indexedFile,
+                inputVCFIndex = indexBaseline.index,
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf",
+                dockerImage = dockerImages["vt"]
+        }
+
+        call samtools.BgzipAndIndex as indexBaselineVcf {
+            input:
+                inputFile = normalizeAndDecomposeBaseline.outputVcf,
+                outputDir = unit.outputPrefix,
+                type = "vcf",
+                dockerImage = dockerImages["tabix"]
+        }
+
+        # Normalize and decompose the call vcf. Otherwise select variants will
+        # not work properly
+        call vt.Normalize as normalizeAndDecomposeCall {
+            input:
+                inputVCF = indexCall.indexedFile,
+                inputVCFIndex = indexCall.index,
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                outputPath = unit.outputPrefix + "_normalizedCalls.vcf",
+                dockerImage = dockerImages["vt"]
+        }
+
+        call samtools.BgzipAndIndex as indexNormalizedCall{
+            input:
+                inputFile = normalizeAndDecomposeCall.outputVcf,
+                outputDir = unit.outputPrefix,
+                type = "vcf",
+                dockerImage = dockerImages["tabix"]
+        }
 
 
-    call gatk.SelectVariants as selectSNPsCall {
-        input:
-            referenceFasta = referenceFasta,
-            referenceFastaFai = referenceFastaFai,
-            referenceFastaDict = referenceFastaDict,
-            inputVcf = indexCallVcf.compressed,
-            inputVcfIndex = indexCallVcf.index,
-            selectTypeToInclude = "SNP",
-            outputPath = outputDir + "/calledSnps.vcf.gz",
-            intervals = select_all([highConfidenceIntervals]),
-            dockerImage = dockerImages["gatk4"]
-    }
+        call gatk.SelectVariants as selectSNPsCall {
+            input:
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                referenceFastaDict = referenceFastaDict,
+                inputVcf = indexNormalizedCall.compressed,
+                inputVcfIndex = indexNormalizedCall.index,
+                selectTypeToInclude = "SNP",
+                outputPath = unit.outputPrefix + "/calledSnps.vcf.gz",
+                intervals = select_all([highConfidenceIntervals]),
+                dockerImage = dockerImages["gatk4"]
+        }
 
-    call gatk.SelectVariants as selectIndelsCall {
-        input:
-            referenceFasta = referenceFasta,
-            referenceFastaFai = referenceFastaFai,
-            referenceFastaDict = referenceFastaDict,
-            inputVcf = indexCallVcf.compressed,
-            inputVcfIndex = indexCallVcf.index,
-            selectTypeToInclude = "INDEL",
-            outputPath = outputDir + "/calledIndels.vcf.gz",
-            intervals = select_all([highConfidenceIntervals]),
-            dockerImage = dockerImages["gatk4"]
-    }
+        call gatk.SelectVariants as selectIndelsCall {
+            input:
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                referenceFastaDict = referenceFastaDict,
+                inputVcf = indexNormalizedCall.compressed,
+                inputVcfIndex = indexNormalizedCall.index,
+                selectTypeToInclude = "INDEL",
+                outputPath = unit.outputPrefix + "/calledIndels.vcf.gz",
+                intervals = select_all([highConfidenceIntervals]),
+                dockerImage = dockerImages["gatk4"]
+        }
 
-    call gatk.SelectVariants as selectSNPsBaseline {
-        input:
-            referenceFasta = referenceFasta,
-            referenceFastaFai = referenceFastaFai,
-            referenceFastaDict = referenceFastaDict,
-            inputVcf = baselineVcf,
-            inputVcfIndex = baselineVcfIndex,
-            selectTypeToInclude = "SNP",
-            outputPath = outputDir + "/baselineSnps.vcf.gz",
-            intervals = select_all([highConfidenceIntervals]),
-            dockerImage = dockerImages["gatk4"]
-    }
+        call gatk.SelectVariants as selectSNPsBaseline {
+            input:
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                referenceFastaDict = referenceFastaDict,
+                inputVcf = indexBaselineVcf.compressed,
+                inputVcfIndex = indexBaselineVcf.index,
+                selectTypeToInclude = "SNP",
+                outputPath = unit.outputPrefix + "/baselineSnps.vcf.gz",
+                intervals = select_all([highConfidenceIntervals]),
+                dockerImage = dockerImages["gatk4"]
+        }
 
-    call gatk.SelectVariants as selectIndelsBaseline {
-        input:
-            referenceFasta = referenceFasta,
-            referenceFastaFai = referenceFastaFai,
-            referenceFastaDict = referenceFastaDict,
-            inputVcf = baselineVcf,
-            inputVcfIndex = baselineVcfIndex,
-            selectTypeToInclude = "INDEL",
-            outputPath = outputDir + "/baselineIndels.vcf.gz",
-            intervals = select_all([highConfidenceIntervals]),
-            dockerImage = dockerImages["gatk4"]
-    }
+        call gatk.SelectVariants as selectIndelsBaseline {
+            input:
+                referenceFasta = referenceFasta,
+                referenceFastaFai = referenceFastaFai,
+                referenceFastaDict = referenceFastaDict,
+                inputVcf = indexBaselineVcf.compressed,
+                inputVcfIndex = indexBaselineVcf.index,
+                selectTypeToInclude = "INDEL",
+                outputPath = unit.outputPrefix + "/baselineIndels.vcf.gz",
+                intervals = select_all([highConfidenceIntervals]),
+                dockerImage = dockerImages["gatk4"]
+        }
 
-    call rtg.Format as formatReference {
-        input:
-            inputFiles = [referenceFasta],
-            outputPath = outputDir + "/reference.sdf",
-            dockerImage = dockerImages["rtg-tools"]
-    }
+        call rtg.Format as formatReference {
+            input:
+                inputFiles = [referenceFasta],
+                outputPath = unit.outputPrefix + "/reference.sdf",
+                dockerImage = dockerImages["rtg-tools"]
+        }
 
-    call rtg.VcfEval as evalSNPs {
-        input:
-            baseline = selectSNPsBaseline.outputVcf,
-            baselineIndex = selectSNPsBaseline.outputVcfIndex,
-            calls = selectSNPsCall.outputVcf,
-            callsIndex = selectSNPsCall.outputVcfIndex,
-            outputDir = outputDir + "/evalSNPs/",
-            template = formatReference.sdf,
-            allRecords = true,
-            bedRegions = regions,
-            sample = sample,
-            dockerImage = dockerImages["rtg-tools"]
-    }
+        call rtg.VcfEval as evalSNPs {
+            input:
+                baseline = selectSNPsBaseline.outputVcf,
+                baselineIndex = selectSNPsBaseline.outputVcfIndex,
+                calls = selectSNPsCall.outputVcf,
+                callsIndex = selectSNPsCall.outputVcfIndex,
+                outputDir = unit.outputPrefix + "/evalSNPs/",
+                template = formatReference.sdf,
+                allRecords = allRecords,
+                bedRegions = regions,
+                sample = unit.sampleNameVcf,
+                dockerImage = dockerImages["rtg-tools"]
+        }
 
-    call rtg.VcfEval as evalIndels {
-        input:
-            baseline = selectIndelsBaseline.outputVcf,
-            baselineIndex = selectIndelsBaseline.outputVcfIndex,
-            calls = selectIndelsCall.outputVcf,
-            callsIndex = selectIndelsCall.outputVcfIndex,
-            outputDir = outputDir + "/evalIndels/",
-            template = formatReference.sdf,
-            allRecords = true,
-            bedRegions = regions,
-            sample = sample,
-            dockerImage = dockerImages["rtg-tools"]
+        call rtg.VcfEval as evalIndels {
+            input:
+                baseline = selectIndelsBaseline.outputVcf,
+                baselineIndex = selectIndelsBaseline.outputVcfIndex,
+                calls = selectIndelsCall.outputVcf,
+                callsIndex = selectIndelsCall.outputVcfIndex,
+                outputDir = unit.outputPrefix + "/evalIndels/",
+                template = formatReference.sdf,
+                allRecords = allRecords,
+                bedRegions = regions,
+                sample = unit.sampleNameVcf,
+                dockerImage = dockerImages["rtg-tools"]
+        }
     }
 
     output {
-        Array[File] indelStats = evalIndels.allStats
-        Array[File] SNPStats = evalSNPs.allStats
-        File indelVcf = selectIndelsCall.outputVcf
-        File indelVcfIndex = selectIndelsCall.outputVcfIndex
-        File SNPVcf = selectSNPsCall.outputVcf
-        File SNPVcfIndex = selectSNPsCall.outputVcfIndex
+        Array[File] indelStats = flatten(evalIndels.allStats)
+        Array[File] SNPStats = flatten(evalSNPs.allStats)
+        Array[File] indelVcf = selectIndelsCall.outputVcf
+        Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
+        Array[File] SNPVcf = selectSNPsCall.outputVcf
+        Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
-        File normalizedVcf = indexCallVcf.compressed
-        File normalizedVcfIndex = indexCallVcf.index
+        Array[File] normalizedVcf = indexNormalizedCall.compressed
+        Array[File] normalizedVcfIndex = indexNormalizedCall.index
 
-        File BaselineIndelVcf = selectIndelsBaseline.outputVcf
-        File BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
-        File BaselineSNPVcf = selectSNPsBaseline.outputVcf
-        File BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
+        Array[File] BaselineIndelVcf = selectIndelsBaseline.outputVcf
+        Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
+        Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
+        Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
     }
 
     parameter_meta {
         referenceFasta: { description: "The reference fasta file", category: "required" }
         referenceFastaFai: { description: "Fasta index (.fai) file of the reference.", category: "required" }
         referenceFastaDict: { description: "Sequence dictionary (.dict) file of the reference.", category: "required" }
-        baselineVcf: {description: "The baseline VCF that contains the true variants.", category: "required"}
-        baselineVcfIndex: {description: "The baseline VCF's index.", category: "required"}
-        callVcf: {description: "The sample VCF file.", category: "required"}
-        callVcfIndex: {description: "The sample VCF's index.", category: "required"}
-        sample: {description:  "the name of the sample to select. Use <baseline_sample>,<calls_sample> to select different sample names for baseline and calls. (Required when using multi-sample VCF files.)",
+        baselineVcfIndex: {description: "The baseline VCF's index.", category: "common"}
+        sampleName: {description:  "the name of the sample to select. Use <baseline_sample>,<calls_sample> to select different sample names for baseline and calls. (Required when using multi-sample VCF files.)",
         category: "common"}
-        outputDir: {description: "Where the output files will be placed.", category: "advanced"}
         highConfidenceIntervals: {description: "Only select SNPs from these intervals for comparison. Useful for Genome In A Bottle samples.",
                                   category: "common" }
-        regions: {description: "perform rtg vcfeval on these regions.", category: "common"}
+        allRecords: {description: "Use all VCF records regardless of FILTER status.", category: "common"}
+        regions: {description: "Perform rtg vcfeval on these regions.", category: "common"}
+        validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "required"}
     }
 }

@@ -5,7 +5,41 @@
     cromwell run -o tests/cromwell_options.json
     -i tests/integration/malesample.json clinical-validation.wdl
   files:
-    - path: test-output/calledIndels.vcf.gz
-    - path: test-output/calledSnps.vcf.gz
-    - path: test-output/evalIndels/summary.txt
-    - path: test-output/evalSNPs/summary.txt
+    - path: test-output/male-sample-output/calledIndels.vcf.gz
+    - path: test-output/male-sample-output/calledSnps.vcf.gz
+    - path: test-output/male-sample-output/evalIndels/summary.txt
+    - path: test-output/male-sample-output/evalSNPs/summary.txt
+  stdout:
+    must_not_contain:
+      - "--all-records"
+
+- name: two-samples
+  tags:
+    - integration
+  command: >-
+    cromwell run -o tests/cromwell_options.json
+    -i tests/integration/multisample.json clinical-validation.wdl
+  files:
+    - path: test-output/sample1/calledIndels.vcf.gz
+    - path: test-output/sample1/calledSnps.vcf.gz
+    - path: test-output/sample1/evalIndels/summary.txt
+    - path: test-output/sample1/evalSNPs/summary.txt
+    - path: test-output/sample2/calledIndels.vcf.gz
+    - path: test-output/sample2/calledSnps.vcf.gz
+    - path: test-output/sample2/evalIndels/summary.txt
+    - path: test-output/sample2/evalSNPs/summary.txt
+  stdout:
+    contains:
+      - "--all-records"
+
+- name: no-samplenameVcf
+  tags:
+    - integration
+  command: >-
+    cromwell run -o tests/cromwell_options.json
+    -i tests/integration/no-samplenameVcf.json clinical-validation.wdl
+  files:
+    - path: test-output/sample-output/calledIndels.vcf.gz
+    - path: test-output/sample-output/calledSnps.vcf.gz
+    - path: test-output/sample-output/evalIndels/summary.txt
+    - path: test-output/sample-output/evalSNPs/summary.txt

@@ -44,4 +44,7 @@ matrix:
       script: bash scripts/biowdl_lint.sh
       after_failure:
         - echo "Linting failed"
+    - env: TEST="womtool-malesample"
     - env: TEST="malesample"
+    - env: TEST="two-samples"
+    - env: TEST="no-samplenameVcf"

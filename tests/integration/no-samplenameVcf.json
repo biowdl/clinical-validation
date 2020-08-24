@@ -4,10 +4,9 @@
   "ClinicalValidation.referenceFastaDict": "tests/data/reference.dict",
   "ClinicalValidation.validationUnit": [
       {
-          "callVcf": "tests/data/multisample.vcf.gz",
-          "baselineVcf": "tests/data/expected.vcf.gz",
-          "sampleNameVcf": "male",
-          "outputPrefix": "male-sample-output"
+          "callVcf": "tests/data/single_sample.vcf.gz",
+          "baselineVcf": "tests/data/expected_single_sample.vcf.gz",
+          "outputPrefix": "sample-output"
     }
   ]
 }

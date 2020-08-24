@@ -2,12 +2,19 @@
   "ClinicalValidation.referenceFasta": "tests/data/reference.fasta",
   "ClinicalValidation.referenceFastaFai": "tests/data/reference.fasta.fai",
   "ClinicalValidation.referenceFastaDict": "tests/data/reference.dict",
+  "ClinicalValidation.allRecords": true,
   "ClinicalValidation.validationUnit": [
-      {
+    {
           "callVcf": "tests/data/multisample.vcf.gz",
           "baselineVcf": "tests/data/expected.vcf.gz",
           "sampleNameVcf": "male",
-          "outputPrefix": "male-sample-output"
+          "outputPrefix": "sample1"
+    },
+    {
+          "callVcf": "tests/data/multisample.vcf.gz",
+          "baselineVcf": "tests/data/expected.vcf.gz",
+          "sampleNameVcf": "female",
+          "outputPrefix": "sample2"
     }
   ]
 }

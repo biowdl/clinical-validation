@@ -1,0 +1,9 @@
+- name: womtool-malesample
+  tags:
+    - sanity
+  command: >-
+    womtool validate --inputs tests/integration/malesample.json
+    clinical-validation.wdl
+  stdout:
+    contains:
+      - "Success!"
