@@ -27,7 +27,7 @@ import "tasks/vt.wdl" as vt
 
 struct ValidationUnit {
     File callVcf
-    File baselineVcf
+    File? baselineVcf
     String outputPrefix
     String? sampleNameVcf
 }
@@ -40,6 +40,7 @@ workflow ClinicalValidation {
         Array[ValidationUnit]+ validationUnit
         File? highConfidenceIntervals
         File? regions
+        File? fallbackBaselineVcf
         Map[String, String] dockerImages = {
             "gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1",
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
@@ -53,7 +54,7 @@ workflow ClinicalValidation {
         # Index the VCF files
         call samtools.Tabix as indexBaseline {
             input:
-                inputFile = unit.baselineVcf
+                inputFile = select_first([unit.baselineVcf, fallbackBaselineVcf])
         }
         call samtools.Tabix as indexCall {
             input:
@@ -216,6 +217,7 @@ workflow ClinicalValidation {
                                   category: "common" }
         allRecords: {description: "Use all VCF records regardless of FILTER status.", category: "common"}
         regions: {description: "Perform rtg vcfeval on these regions.", category: "common"}
+        fallbackBaselineVcf: {description: "Fallback baseline VCF file to use when the baselineVcf has not been set in the struct.", category: "common"}
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "required"}
     }

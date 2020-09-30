@@ -43,3 +43,23 @@
     - path: test-output/sample-output/calledSnps.vcf.gz
     - path: test-output/sample-output/evalIndels/summary.txt
     - path: test-output/sample-output/evalSNPs/summary.txt
+
+- name: two-samples-fallback
+  tags:
+    - integration
+  command: >-
+    cromwell run -o tests/cromwell_options.json
+    -i tests/integration/multisample_fallback.json clinical-validation.wdl
+  files:
+    - path: test-output/sample1/calledIndels.vcf.gz
+    - path: test-output/sample1/calledSnps.vcf.gz
+    - path: test-output/sample1/evalIndels/summary.txt
+    - path: test-output/sample1/evalSNPs/summary.txt
+    - path: test-output/sample2/calledIndels.vcf.gz
+    - path: test-output/sample2/calledSnps.vcf.gz
+    - path: test-output/sample2/evalIndels/summary.txt
+    - path: test-output/sample2/evalSNPs/summary.txt
+  stdout:
+    contains:
+      - "--all-records"
+
