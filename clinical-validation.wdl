@@ -45,7 +45,8 @@ workflow ClinicalValidation {
             "gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1",
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
-            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0"
+            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0",
+            "python3": "python:3.8.6-slim"
         }
         Boolean allRecords = false
     }
@@ -189,6 +190,14 @@ workflow ClinicalValidation {
         }
     }
 
+    call parseSummary as parseSummary {
+        input:
+            snpSummary = evalSNPs.summary,
+            indelSummary = evalIndels.summary,
+            dockerImage = dockerImages["python3"]
+    }
+
+
     output {
         Array[File] indelStats = flatten(evalIndels.allStats)
         Array[File] SNPStats = flatten(evalSNPs.allStats)
@@ -220,5 +229,26 @@ workflow ClinicalValidation {
         fallbackBaselineVcf: {description: "Fallback baseline VCF file to use when the baselineVcf has not been set in the struct.", category: "common"}
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "required"}
+    }
+}
+
+task parseSummary {
+    input {
+        Array[File] snpSummary
+        Array[File] indelSummary
+
+        String memory = "4G"
+        String dockerImage = "python:3.8.6-slim"
+    }
+
+    command {
+        python3 src/parse_summary \
+            ~{sep=" --snp-summary " snpSummary}
+            ~{sep=" --indel-summary " indelSummary}
+    }
+
+    runtime {
+        docker: dockerImage
+        memory: memory
     }
 }
