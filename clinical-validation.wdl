@@ -46,7 +46,7 @@ workflow ClinicalValidation {
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
             "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0",
-            "python3": "python:3.8.6-slim"
+            "plotly": "quay.io/biocontainers/plotly:3.1.1",
         }
         Boolean allRecords = false
     }
@@ -194,7 +194,7 @@ workflow ClinicalValidation {
         input:
             snpSummary = evalSNPs.summary,
             indelSummary = evalIndels.summary,
-            dockerImage = dockerImages["python3"]
+            dockerImage = dockerImages["plotly"]
     }
 
 
@@ -236,13 +236,14 @@ task parseSummary {
     input {
         Array[File] snpSummary
         Array[File] indelSummary
+        File parseSummary = "src/parse_summary.py"
 
         String memory = "4G"
-        String dockerImage = "python:3.8.6-slim"
+        String dockerImage = "quay.io/biocontainers/plotly:3.1.1"
     }
 
     command {
-        python3 src/parse_summary \
+        python3 ~{parseSummary} \
             ~{sep=" --snp-summary " snpSummary}
             ~{sep=" --indel-summary " indelSummary}
     }
