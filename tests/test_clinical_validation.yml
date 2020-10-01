@@ -34,8 +34,12 @@
         - "sample2"
     - path: test-output/indel_summary.tsv
       contains:
-        - "sample1"
-        - "sample2"
+        - "sample1\tNone"
+        - "sample2\tNone"
+      must_not_contain:
+        - "sample1\t0"
+        - "sample2\t0"
+
     - path: test-output/snp_summary.tsv
       contains:
         - "sample1"
