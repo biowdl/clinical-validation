@@ -28,6 +28,18 @@
     - path: test-output/sample2/calledSnps.vcf.gz
     - path: test-output/sample2/evalIndels/summary.txt
     - path: test-output/sample2/evalSNPs/summary.txt
+    - path: test-output/summary.html
+      contains:
+        - "sample1"
+        - "sample2"
+    - path: test-output/indel_summary.tsv
+      contains:
+        - "sample1"
+        - "sample2"
+    - path: test-output/snp_summary.tsv
+      contains:
+        - "sample1"
+        - "sample2"
   stdout:
     contains:
       - "--all-records"

@@ -220,6 +220,10 @@ workflow ClinicalValidation {
         Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
         Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
         Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
+
+        File? indelTSV = parseSummary.indelTSV
+        File? snpTSV = parseSummary.snpTSV
+        File? htmlGraph = parseSummary.htmlGraph
     }
 
     parameter_meta {
@@ -253,6 +257,11 @@ task parseSummary {
         String dockerImage = "lumc/plotly:4.10.0"
     }
 
+    runtime {
+        docker: dockerImage
+        memory: memory
+    }
+
     command {
         python3 ~{parseSummary} \
             --snp-summary  ~{sep=" " snpSummary} \
@@ -263,8 +272,9 @@ task parseSummary {
             ~{"--html-graph " + htmlGraph}
     }
 
-    runtime {
-        docker: dockerImage
-        memory: memory
+    output {
+        File? indelTSV = indelTSV
+        File? snpTSV = snpTSV
+        File? htmlGraph = htmlGraph
     }
 }
