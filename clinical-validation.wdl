@@ -221,9 +221,9 @@ workflow ClinicalValidation {
         Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
         Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
 
-        File? indelTSV = parseSummary.indelTSV
-        File? snpTSV = parseSummary.snpTSV
-        File? htmlGraph = parseSummary.htmlGraph
+        File? indelTSV = parseSummary.IndelTSV
+        File? snpTSV = parseSummary.SnpTSV
+        File? htmlGraph = parseSummary.HtmlGraph
     }
 
     parameter_meta {
@@ -251,7 +251,6 @@ task parseSummary {
         String? htmlGraph
         String? indelTSV
         String? snpTSV
-        File parseSummary = "src/parse_summary.py"
 
         String memory = "4G"
         String dockerImage = "lumc/plotly:4.10.0"
@@ -263,7 +262,7 @@ task parseSummary {
     }
 
     command {
-        python3 ~{parseSummary} \
+        parse_summary \
             --snp-summary  ~{sep=" " snpSummary} \
             --indel-summary  ~{sep=" " indelSummary} \
             --samples  ~{sep=" " sampleNames} \
@@ -273,8 +272,14 @@ task parseSummary {
     }
 
     output {
-        File? indelTSV = indelTSV
-        File? snpTSV = snpTSV
-        File? htmlGraph = htmlGraph
+        File? IndelTSV = indelTSV
+        File? SnpTSV = snpTSV
+        File? HtmlGraph = htmlGraph
+    }
+
+    parameter_meta {
+        sampleNames: {description:  "The names of the samples, in the same order as snpSummary and indelSummary", category: "common"}
+        dockerImage: {description: "The docker images used.", category: "required"}
+        memory: {description: "The amount of memory to use.", category: "required"}
     }
 }
