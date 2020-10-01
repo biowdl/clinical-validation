@@ -18,7 +18,11 @@ def parse_summary(filename):
 
         # Check to see if we got an empty file
         if header == no_data:
-            return [{k: 0 for k in expected_header}]
+            # Set all values to 0, since we have no data
+            d = {k: 0 for k in expected_header}
+            # Threshold should be 'None', not 0
+            d['Threshold'] = 'None'
+            return [d]
 
         # Make sure the header matches
         header = header.strip().split()
