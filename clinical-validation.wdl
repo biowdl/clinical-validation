@@ -46,12 +46,15 @@ workflow ClinicalValidation {
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
             "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
             "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0",
-            "plotly": "quay.io/biocontainers/plotly:3.1.1",
+            "plotly": "lumc/plotly:4.10.0"
         }
         Boolean allRecords = false
     }
 
     scatter (unit in validationUnit) {
+        # This is needed for the summary report
+        String sampleName = unit.outputPrefix
+
         # Index the VCF files
         call samtools.Tabix as indexBaseline {
             input:
@@ -194,6 +197,10 @@ workflow ClinicalValidation {
         input:
             snpSummary = evalSNPs.summary,
             indelSummary = evalIndels.summary,
+            sampleNames = sampleName,
+            htmlGraph = "summary.html",
+            indelTSV = "indel_summary.tsv",
+            snpTSV = "snp_summary.tsv",
             dockerImage = dockerImages["plotly"]
     }
 
@@ -234,18 +241,26 @@ workflow ClinicalValidation {
 
 task parseSummary {
     input {
-        Array[File] snpSummary
-        Array[File] indelSummary
+        Array[File]+ snpSummary
+        Array[File]+ indelSummary
+        Array[String]+ sampleNames
+        String? htmlGraph
+        String? indelTSV
+        String? snpTSV
         File parseSummary = "src/parse_summary.py"
 
         String memory = "4G"
-        String dockerImage = "quay.io/biocontainers/plotly:3.1.1"
+        String dockerImage = "lumc/plotly:4.10.0"
     }
 
     command {
         python3 ~{parseSummary} \
-            ~{sep=" --snp-summary " snpSummary}
-            ~{sep=" --indel-summary " indelSummary}
+            --snp-summary  ~{sep=" " snpSummary} \
+            --indel-summary  ~{sep=" " indelSummary} \
+            --samples  ~{sep=" " sampleNames} \
+            ~{"--indel-tsv " + indelTSV} \
+            ~{"--snp-tsv " + snpTSV} \
+            ~{"--html-graph " + htmlGraph}
     }
 
     runtime {
