@@ -44,7 +44,7 @@ def print_tsv(data, filename):
                 writefile(sample, *(entry[field] for field in expected_header))
 
 
-def plot_data(samples, snps, indels):
+def plot_data(samples, snps, indels, filename):
     """ Plot the SNP and Indel data using plotly """
     categories = ['SNP Precision', 'SNP Sensitivity', 'Indel Precision',
                   'Indel Sensitivity']
@@ -70,7 +70,7 @@ def plot_data(samples, snps, indels):
             y=plot_data[sample]) for sample in samples])
 
     fig.update_layout(barmode='group')
-    fig.write_html('fig1.html')
+    fig.write_html(filename)
 
 
 def main(args):
@@ -89,7 +89,8 @@ def main(args):
     if args.snp_tsv:
         print_tsv(snps, args.snp_tsv)
 
-    plot_data(args.samples, snps, indels)
+    if args.html_graph:
+        plot_data(args.samples, snps, indels, args.html_graph)
 
 
 if __name__ == '__main__':
@@ -112,6 +113,10 @@ if __name__ == '__main__':
     parser.add_argument('--snp-tsv',
                         required=False,
                         help='TSV output file of SNP statistics')
+    parser.add_argument('--html-graph',
+                        required=False,
+                        help='HTML graph of the sensitivity and specificity '
+                             'without a threshold applied')
 
     args = parser.parse_args()
     assert len(args.snp_summary) == len(args.indel_summary)
