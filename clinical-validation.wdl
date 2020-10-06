@@ -279,7 +279,7 @@ task parseSummary {
 
     parameter_meta {
         sampleNames: {description:  "The names of the samples, in the same order as snpSummary and indelSummary", category: "common"}
-        dockerImage: {description: "The docker images used.", category: "required"}
-        memory: {description: "The amount of memory to use.", category: "required"}
+        dockerImage: {description: "The docker images used.", category: "advanced"}
+        memory: {description: "The amount of memory to use.", category: "advanced"}
     }
 }
