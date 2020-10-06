@@ -282,8 +282,8 @@ task parseSummary {
         sampleNames: {description:  "The names of the samples, in the same order as snpSummary and indelSummary", category: "common"}
         snpSummary: {description: "One or more summary files for the SNP comparison", category: "required"}
         indelSummary: {description: "One or more summary files for the indel comparison", category: "required"}
-        dockerImage: {description: "The docker images used.", category: "required"}
-        memory: {description: "The amount of memory to use.", category: "required"}
+        dockerImage: {description: "The docker images used.", category: "advanced"}
+        memory: {description: "The amount of memory to use.", category: "advanced"}
         # output
         htmlGraph: {description: "Output filename for the html comparison graph", category: "common"}
         indelTSV: {description: "Output filename for the indel comparison table", category: "common"}
