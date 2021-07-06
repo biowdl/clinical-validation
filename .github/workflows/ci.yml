@@ -28,7 +28,8 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2.0.1 # https://github.com/conda-incubator/setup-miniconda.
         with:
           channels: conda-forge,bioconda,defaults
-          run: conda install -n test --file requirements-test.txt
+      - name: Install requirements.
+        run: conda install -n test --file requirements-test.txt
       - name: Run test in conda environment
         # Use --symlink to limit disk usage.
         run: >- 
