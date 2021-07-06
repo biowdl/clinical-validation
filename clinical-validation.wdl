@@ -239,7 +239,7 @@ workflow ClinicalValidation {
         regions: {description: "Perform rtg vcfeval on these regions.", category: "common"}
         fallbackBaselineVcf: {description: "Fallback baseline VCF file to use when the baselineVcf has not been set in the struct.", category: "common"}
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
-        dockerImages: {description: "The docker images used.", category: "required"}
+        dockerImages: {description: "The docker images used.", category: "advanced"}
     }
 }
 
