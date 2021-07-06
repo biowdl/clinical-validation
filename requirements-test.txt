@@ -5,6 +5,6 @@
 # this file can be installed with "conda install --file requirements-test.txt"
 # TODO: Remove cromwell version requirement once bug in cromwell is fixed: https://github.com/broadinstitute/cromwell/pull/5437
 cromwell<=48
-pytest-workflow
+pytest-workflow=1.4
 miniwdl
 wdl-aid
