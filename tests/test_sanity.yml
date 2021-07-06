@@ -7,3 +7,13 @@
   stdout:
     contains:
       - "Success!"
+
+- name: womtool-multisample-fallback
+  tags:
+    - sanity
+  command: >-
+    womtool validate --inputs tests/integration/multisample_fallback.json
+    clinical-validation.wdl
+  stdout:
+    contains:
+      - "Success!"

@@ -48,3 +48,4 @@ matrix:
     - env: TEST="malesample"
     - env: TEST="two-samples"
     - env: TEST="no-samplenameVcf"
+    - env: TEST="two-samples-fallback"
