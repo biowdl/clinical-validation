@@ -51,6 +51,13 @@ workflow ClinicalValidation {
         Boolean allRecords = false
     }
 
+    call rtg.Format as formatReference {
+        input:
+            inputFiles = [referenceFasta],
+            outputPath = "reference.sdf",
+            dockerImage = dockerImages["rtg-tools"]
+    }
+
     scatter (unit in validationUnit) {
         # This is needed for the summary report
         String sampleName = unit.outputPrefix
@@ -155,13 +162,6 @@ workflow ClinicalValidation {
                 outputPath = unit.outputPrefix + "/baselineIndels.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
                 dockerImage = dockerImages["gatk4"]
-        }
-
-        call rtg.Format as formatReference {
-            input:
-                inputFiles = [referenceFasta],
-                outputPath = unit.outputPrefix + "/reference.sdf",
-                dockerImage = dockerImages["rtg-tools"]
         }
 
         call rtg.VcfEval as evalSNPs {
