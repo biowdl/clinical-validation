@@ -42,10 +42,10 @@ workflow ClinicalValidation {
         File? regions
         File? fallbackBaselineVcf
         Map[String, String] dockerImages = {
-            "gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1",
+            "gatk4": "quay.io/biocontainers/gatk4:4.5.0.0--py36hdfd78af_0",
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
-            "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
-            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0",
+            "tabix": "quay.io/biocontainers/tabix:1.11--hdfd78af_0",
+            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.12.1--hdfd78af_0",
             "plotly": "lumc/plotly:4.10.0"
         }
         Boolean allRecords = false
