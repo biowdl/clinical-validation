@@ -208,18 +208,20 @@ workflow ClinicalValidation {
     output {
         Array[File] indelStats = flatten(evalIndels.allStats)
         Array[File] SNPStats = flatten(evalSNPs.allStats)
-        Array[File] indelVcf = selectIndelsCall.outputVcf
-        Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
-        Array[File] SNPVcf = selectSNPsCall.outputVcf
-        Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
-        Array[File] normalizedVcf = indexNormalizedCall.compressed
-        Array[File] normalizedVcfIndex = indexNormalizedCall.index
-
+        Array[File] normalizedBaselineVcf = indexBaselineVcf.compressed
+        Array[File] normalizedBaselineVcfIndex = indexBaselineVcf.index
         Array[File] BaselineIndelVcf = selectIndelsBaseline.outputVcf
         Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
         Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
         Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
+
+        Array[File] normalizedVcf = indexNormalizedCall.compressed
+        Array[File] normalizedVcfIndex = indexNormalizedCall.index
+        Array[File] indelVcf = selectIndelsCall.outputVcf
+        Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
+        Array[File] SNPVcf = selectSNPsCall.outputVcf
+        Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
         File? indelTSV = parseSummary.IndelTSV
         File? snpTSV = parseSummary.SnpTSV
