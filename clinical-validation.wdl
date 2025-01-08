@@ -42,13 +42,20 @@ workflow ClinicalValidation {
         File? regions
         File? fallbackBaselineVcf
         Map[String, String] dockerImages = {
-            "gatk4": "quay.io/biocontainers/gatk4:4.1.2.0--1",
+            "gatk4": "quay.io/biocontainers/gatk4:4.5.0.0--py36hdfd78af_0",
             "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
-            "tabix": "quay.io/biocontainers/tabix:0.2.6--ha92aebf_0",
-            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.10.1--0",
+            "tabix": "quay.io/biocontainers/tabix:1.11--hdfd78af_0",
+            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.12.1--hdfd78af_0",
             "plotly": "lumc/plotly:4.10.0"
         }
         Boolean allRecords = false
+    }
+
+    call rtg.Format as formatReference {
+        input:
+            inputFiles = [referenceFasta],
+            outputPath = "reference.sdf",
+            dockerImage = dockerImages["rtg-tools"]
     }
 
     scatter (unit in validationUnit) {
@@ -157,13 +164,6 @@ workflow ClinicalValidation {
                 dockerImage = dockerImages["gatk4"]
         }
 
-        call rtg.Format as formatReference {
-            input:
-                inputFiles = [referenceFasta],
-                outputPath = unit.outputPrefix + "/reference.sdf",
-                dockerImage = dockerImages["rtg-tools"]
-        }
-
         call rtg.VcfEval as evalSNPs {
             input:
                 baseline = selectSNPsBaseline.outputVcf,
@@ -171,7 +171,7 @@ workflow ClinicalValidation {
                 calls = selectSNPsCall.outputVcf,
                 callsIndex = selectSNPsCall.outputVcfIndex,
                 outputDir = unit.outputPrefix + "/evalSNPs/",
-                template = formatReference.sdf,
+                referenceFiles = formatReference.referenceFiles,
                 allRecords = allRecords,
                 bedRegions = regions,
                 sample = unit.sampleNameVcf,
@@ -185,7 +185,7 @@ workflow ClinicalValidation {
                 calls = selectIndelsCall.outputVcf,
                 callsIndex = selectIndelsCall.outputVcfIndex,
                 outputDir = unit.outputPrefix + "/evalIndels/",
-                template = formatReference.sdf,
+                referenceFiles = formatReference.referenceFiles,
                 allRecords = allRecords,
                 bedRegions = regions,
                 sample = unit.sampleNameVcf,
@@ -208,18 +208,20 @@ workflow ClinicalValidation {
     output {
         Array[File] indelStats = flatten(evalIndels.allStats)
         Array[File] SNPStats = flatten(evalSNPs.allStats)
-        Array[File] indelVcf = selectIndelsCall.outputVcf
-        Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
-        Array[File] SNPVcf = selectSNPsCall.outputVcf
-        Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
-        Array[File] normalizedVcf = indexNormalizedCall.compressed
-        Array[File] normalizedVcfIndex = indexNormalizedCall.index
-
+        Array[File] normalizedBaselineVcf = indexBaselineVcf.compressed
+        Array[File] normalizedBaselineVcfIndex = indexBaselineVcf.index
         Array[File] BaselineIndelVcf = selectIndelsBaseline.outputVcf
         Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
         Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
         Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
+
+        Array[File] normalizedVcf = indexNormalizedCall.compressed
+        Array[File] normalizedVcfIndex = indexNormalizedCall.index
+        Array[File] indelVcf = selectIndelsCall.outputVcf
+        Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
+        Array[File] SNPVcf = selectSNPsCall.outputVcf
+        Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
 
         File? indelTSV = parseSummary.IndelTSV
         File? snpTSV = parseSummary.SnpTSV

@@ -2,13 +2,13 @@
   tags:
     - integration
   command: >-
-    cromwell run -o tests/cromwell_options.json
+    miniwdl run --cfg tests/miniwdl.cfg -d test-output/.
     -i tests/integration/malesample.json clinical-validation.wdl
   files:
-    - path: test-output/male-sample-output/calledIndels.vcf.gz
-    - path: test-output/male-sample-output/calledSnps.vcf.gz
-    - path: test-output/male-sample-output/evalIndels/summary.txt
-    - path: test-output/male-sample-output/evalSNPs/summary.txt
+    - path: test-output/out/male-sample-output/calledIndels.vcf.gz
+    - path: test-output/out/male-sample-output/calledSnps.vcf.gz
+    - path: test-output/out/male-sample-output/evalIndels/summary.txt
+    - path: test-output/out/male-sample-output/evalSNPs/summary.txt
   stdout:
     must_not_contain:
       - "--all-records"
@@ -17,22 +17,22 @@
   tags:
     - integration
   command: >-
-    cromwell run -o tests/cromwell_options.json
+    miniwdl run --cfg tests/miniwdl.cfg -d test-output/. --debug
     -i tests/integration/multisample.json clinical-validation.wdl
   files:
-    - path: test-output/sample1/calledIndels.vcf.gz
-    - path: test-output/sample1/calledSnps.vcf.gz
-    - path: test-output/sample1/evalIndels/summary.txt
-    - path: test-output/sample1/evalSNPs/summary.txt
-    - path: test-output/sample2/calledIndels.vcf.gz
-    - path: test-output/sample2/calledSnps.vcf.gz
-    - path: test-output/sample2/evalIndels/summary.txt
-    - path: test-output/sample2/evalSNPs/summary.txt
-    - path: test-output/summary.html
+    - path: test-output/out/sample1/calledIndels.vcf.gz
+    - path: test-output/out/sample1/calledSnps.vcf.gz
+    - path: test-output/out/sample1/evalIndels/summary.txt
+    - path: test-output/out/sample1/evalSNPs/summary.txt
+    - path: test-output/out/sample2/calledIndels.vcf.gz
+    - path: test-output/out/sample2/calledSnps.vcf.gz
+    - path: test-output/out/sample2/evalIndels/summary.txt
+    - path: test-output/out/sample2/evalSNPs/summary.txt
+    - path: test-output/out/summary.html
       contains:
         - "sample1"
         - "sample2"
-    - path: test-output/indel_summary.tsv
+    - path: test-output/out/indel_summary.tsv
       contains:
         - "sample1\tNone"
         - "sample2\tNone"
@@ -40,11 +40,11 @@
         - "sample1\t0"
         - "sample2\t0"
 
-    - path: test-output/snp_summary.tsv
+    - path: test-output/out/snp_summary.tsv
       contains:
         - "sample1"
         - "sample2"
-  stdout:
+  stderr:
     contains:
       - "--all-records"
 
@@ -52,30 +52,30 @@
   tags:
     - integration
   command: >-
-    cromwell run -o tests/cromwell_options.json
+    miniwdl run --cfg tests/miniwdl.cfg -d test-output/.
     -i tests/integration/no-samplenameVcf.json clinical-validation.wdl
   files:
-    - path: test-output/sample-output/calledIndels.vcf.gz
-    - path: test-output/sample-output/calledSnps.vcf.gz
-    - path: test-output/sample-output/evalIndels/summary.txt
-    - path: test-output/sample-output/evalSNPs/summary.txt
+    - path: test-output/out/sample-output/calledIndels.vcf.gz
+    - path: test-output/out/sample-output/calledSnps.vcf.gz
+    - path: test-output/out/sample-output/evalIndels/summary.txt
+    - path: test-output/out/sample-output/evalSNPs/summary.txt
 
 - name: two-samples-fallback
   tags:
     - integration
   command: >-
-    cromwell run -o tests/cromwell_options.json
+    miniwdl run --cfg tests/miniwdl.cfg -d test-output/. --debug
     -i tests/integration/multisample_fallback.json clinical-validation.wdl
   files:
-    - path: test-output/sample1/calledIndels.vcf.gz
-    - path: test-output/sample1/calledSnps.vcf.gz
-    - path: test-output/sample1/evalIndels/summary.txt
-    - path: test-output/sample1/evalSNPs/summary.txt
-    - path: test-output/sample2/calledIndels.vcf.gz
-    - path: test-output/sample2/calledSnps.vcf.gz
-    - path: test-output/sample2/evalIndels/summary.txt
-    - path: test-output/sample2/evalSNPs/summary.txt
-  stdout:
+    - path: test-output/out/sample1/calledIndels.vcf.gz
+    - path: test-output/out/sample1/calledSnps.vcf.gz
+    - path: test-output/out/sample1/evalIndels/summary.txt
+    - path: test-output/out/sample1/evalSNPs/summary.txt
+    - path: test-output/out/sample2/calledIndels.vcf.gz
+    - path: test-output/out/sample2/calledSnps.vcf.gz
+    - path: test-output/out/sample2/evalIndels/summary.txt
+    - path: test-output/out/sample2/evalSNPs/summary.txt
+  stderr:
     contains:
       - "--all-records"
 
