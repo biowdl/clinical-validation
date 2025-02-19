@@ -203,19 +203,19 @@ workflow ClinicalValidation {
             }
             call vep.Vep as vepIndelFalsePositives {
                 input:
-                    inputFile = evalIndels.falseNegativesVcf,
+                    inputFile = evalIndels.falsePositivesVcf,
                     outputPath = unit.outputPrefix + "/evalIndels/fp.vep.vcf.gz",
                     cacheTar = select_first([vepCacheTar])
             }
             call vep.Vep as vepSnpFalseNegatives {
                 input:
-                    inputFile = evalIndels.falseNegativesVcf,
+                    inputFile = evalSNPs.falseNegativesVcf,
                     outputPath = unit.outputPrefix + "/evalSNPs/fn.vep.vcf.gz",
                     cacheTar = select_first([vepCacheTar])
             }
             call vep.Vep as vepSnpFalsePositives {
                 input:
-                    inputFile = evalIndels.falseNegativesVcf,
+                    inputFile = evalSNPs.falsePositivesVcf,
                     outputPath = unit.outputPrefix + "/evalSNPs/fp.vep.vcf.gz",
                     cacheTar = select_first([vepCacheTar])
             }
