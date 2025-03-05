@@ -22,6 +22,7 @@ version 1.0
 
 import "tasks/gatk.wdl" as gatk
 import "tasks/rtg.wdl" as rtg
+import "tasks/multiqc.wdl" as multiqc
 import "tasks/samtools.wdl" as samtools
 import "tasks/vep.wdl" as vep
 import "tasks/vt.wdl" as vt
@@ -226,6 +227,26 @@ workflow ClinicalValidation {
             vepSnpFalseNegatives.outputFile, 
             vepSnpFalsePositives.outputFile, 
         ])
+        Array[File] vepHtmlReports = select_all([
+            vepIndelFalseNegatives.statsHtml, 
+            vepIndelFalsePositives.statsHtml, 
+            vepSnpFalseNegatives.statsHtml, 
+            vepSnpFalsePositives.statsHtml, 
+        ])
+
+        Array[File] vepTxtReports = select_all([
+            vepIndelFalseNegatives.statsTxt, 
+            vepIndelFalsePositives.statsTxt, 
+            vepSnpFalseNegatives.statsTxt, 
+            vepSnpFalsePositives.statsTxt, 
+        ])
+    }
+
+    if (length(flatten(vepTxtReports)) > 0) {
+        call multiqc.MultiQC as multiQC {
+            input:
+                reports = flatten(vepTxtReports)
+        }
     }
 
     call parseSummary as parseSummary {
@@ -258,6 +279,8 @@ workflow ClinicalValidation {
         Array[File] SNPVcf = selectSNPsCall.outputVcf
         Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
         Array[File] vepAnnotatedDifferences = flatten(vepFiles)
+        Array[File] vepStatsHtmlFiles = flatten(vepHtmlReports)
+        File? multiQCReport = multiQC.multiqcReport
 
         File? indelTSV = parseSummary.IndelTSV
         File? snpTSV = parseSummary.SnpTSV
