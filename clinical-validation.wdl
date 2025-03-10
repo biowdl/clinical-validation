@@ -233,19 +233,12 @@ workflow ClinicalValidation {
             vepSnpFalseNegatives.statsHtml, 
             vepSnpFalsePositives.statsHtml, 
         ])
-
-        Array[File] vepTxtReports = select_all([
-            vepIndelFalseNegatives.statsTxt, 
-            vepIndelFalsePositives.statsTxt, 
-            vepSnpFalseNegatives.statsTxt, 
-            vepSnpFalsePositives.statsTxt, 
-        ])
     }
 
-    if (length(flatten(vepTxtReports)) > 0) {
+    if (length(flatten(vepHtmlReports)) > 0) {
         call multiqc.MultiQC as multiQC {
             input:
-                reports = flatten(vepTxtReports)
+                reports = flatten(vepHtmlReports)
         }
     }
 
