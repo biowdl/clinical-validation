@@ -26,7 +26,7 @@ jobs:
       - id: get_tests
         run: |
           # Remove all whitespace first
-          TESTS="$(cat ci_tests.json | tr -d '\r\n\t ')"
+          TESTS="$(cat ci_tests.json | jq -c)"
           echo "$TESTS"
           echo "::set-output name=tests::$TESTS"
   test:
