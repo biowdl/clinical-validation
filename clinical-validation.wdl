@@ -22,7 +22,9 @@ version 1.0
 
 import "tasks/gatk.wdl" as gatk
 import "tasks/rtg.wdl" as rtg
+import "tasks/multiqc.wdl" as multiqc
 import "tasks/samtools.wdl" as samtools
+import "tasks/vep.wdl" as vep
 import "tasks/vt.wdl" as vt
 
 struct ValidationUnit {
@@ -49,6 +51,7 @@ workflow ClinicalValidation {
             "plotly": "lumc/plotly:4.10.0"
         }
         Boolean allRecords = false
+        File? vepCacheTar
     }
 
     call rtg.Format as formatReference {
@@ -191,6 +194,52 @@ workflow ClinicalValidation {
                 sample = unit.sampleNameVcf,
                 dockerImage = dockerImages["rtg-tools"]
         }
+
+        if (defined(vepCacheTar)) {
+            call vep.Vep as vepIndelFalseNegatives {
+                input:
+                    inputFile = evalIndels.falseNegativesVcf,
+                    outputPath = unit.outputPrefix + "/evalIndels/fn.vep.vcf.gz",
+                    cacheTar = select_first([vepCacheTar])
+            }
+            call vep.Vep as vepIndelFalsePositives {
+                input:
+                    inputFile = evalIndels.falsePositivesVcf,
+                    outputPath = unit.outputPrefix + "/evalIndels/fp.vep.vcf.gz",
+                    cacheTar = select_first([vepCacheTar])
+            }
+            call vep.Vep as vepSnpFalseNegatives {
+                input:
+                    inputFile = evalSNPs.falseNegativesVcf,
+                    outputPath = unit.outputPrefix + "/evalSNPs/fn.vep.vcf.gz",
+                    cacheTar = select_first([vepCacheTar])
+            }
+            call vep.Vep as vepSnpFalsePositives {
+                input:
+                    inputFile = evalSNPs.falsePositivesVcf,
+                    outputPath = unit.outputPrefix + "/evalSNPs/fp.vep.vcf.gz",
+                    cacheTar = select_first([vepCacheTar])
+            }
+        }
+        Array[File] vepFiles = select_all([
+            vepIndelFalseNegatives.outputFile, 
+            vepIndelFalsePositives.outputFile, 
+            vepSnpFalseNegatives.outputFile, 
+            vepSnpFalsePositives.outputFile, 
+        ])
+        Array[File] vepHtmlReports = select_all([
+            vepIndelFalseNegatives.statsHtml, 
+            vepIndelFalsePositives.statsHtml, 
+            vepSnpFalseNegatives.statsHtml, 
+            vepSnpFalsePositives.statsHtml, 
+        ])
+    }
+
+    if (length(flatten(vepHtmlReports)) > 0) {
+        call multiqc.MultiQC as multiQC {
+            input:
+                reports = flatten(vepHtmlReports)
+        }
     }
 
     call parseSummary as parseSummary {
@@ -222,6 +271,9 @@ workflow ClinicalValidation {
         Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
         Array[File] SNPVcf = selectSNPsCall.outputVcf
         Array[File] SNPVcfIndex = selectSNPsCall.outputVcfIndex
+        Array[File] vepAnnotatedDifferences = flatten(vepFiles)
+        Array[File] vepStatsHtmlFiles = flatten(vepHtmlReports)
+        File? multiQCReport = multiQC.multiqcReport
 
         File? indelTSV = parseSummary.IndelTSV
         File? snpTSV = parseSummary.SnpTSV
@@ -242,6 +294,7 @@ workflow ClinicalValidation {
         fallbackBaselineVcf: {description: "Fallback baseline VCF file to use when the baselineVcf has not been set in the struct.", category: "common"}
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "advanced"}
+        vepCacheTar: {description: "A tarball of a VEP cache to be used to annotate differences.", category: "common"}
     }
 }
 

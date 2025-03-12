@@ -11,6 +11,7 @@ that users understand how the changes affect the new version.
 
 version 0.1.0-dev
 -----------------
+- Optionally annotate differences with VEP.
 - Update gatk4, tabix and rtg-tools
 - Allow call caching of reference creation
 - Switch to miniwdl for testing
