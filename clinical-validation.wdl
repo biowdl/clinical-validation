@@ -52,6 +52,8 @@ workflow ClinicalValidation {
         }
         Boolean allRecords = false
         File? vepCacheTar
+
+        String? filterExpression
     }
 
     call rtg.Format as formatReference {
@@ -85,6 +87,7 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf.gz",
+                filterExpression = filterExpression,
                 dockerImage = dockerImages["vt"]
         }
 
@@ -97,6 +100,7 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 outputPath = unit.outputPrefix + "_normalizedCalls.vcf.gz",
+                filterExpression = filterExpression,
                 dockerImage = dockerImages["vt"]
         }
 
@@ -280,6 +284,7 @@ workflow ClinicalValidation {
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "advanced"}
         vepCacheTar: {description: "A tarball of a VEP cache to be used to annotate differences.", category: "common"}
+        filterExpression: {description: "Which variants to include. See https://genome.sph.umich.edu/wiki/Vt#Filters for valid expressions.", category: "common"}
     }
 }
 
