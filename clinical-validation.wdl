@@ -45,13 +45,15 @@ workflow ClinicalValidation {
         File? fallbackBaselineVcf
         Map[String, String] dockerImages = {
             "gatk4": "quay.io/biocontainers/gatk4:4.5.0.0--py36hdfd78af_0",
-            "vt": "quay.io/biocontainers/vt:0.57721--hdf88d34_2",
-            "tabix": "quay.io/biocontainers/tabix:1.11--hdfd78af_0",
-            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.12.1--hdfd78af_0",
+            "vt": "quay.io/biocontainers/vt:0.57721--h2419454_12",
+            "htslib": "quay.io/biocontainers/htslib:1.21--h566b1c6_1",
+            "rtg-tools": "quay.io/biocontainers/rtg-tools:3.12.1--hdfd78af_1",
             "plotly": "lumc/plotly:4.10.0"
         }
         Boolean allRecords = false
         File? vepCacheTar
+
+        String? filterExpression
     }
 
     call rtg.Format as formatReference {
@@ -68,11 +70,13 @@ workflow ClinicalValidation {
         # Index the VCF files
         call samtools.Tabix as indexBaseline {
             input:
-                inputFile = select_first([unit.baselineVcf, fallbackBaselineVcf])
+                inputFile = select_first([unit.baselineVcf, fallbackBaselineVcf]),
+                dockerImage = dockerImages["htslib"]
         }
         call samtools.Tabix as indexCall {
             input:
-                inputFile = unit.callVcf
+                inputFile = unit.callVcf,
+                dockerImage = dockerImages["htslib"]
         }
 
         # Normalize and decompose the baseline vcf.
@@ -82,16 +86,9 @@ workflow ClinicalValidation {
                 inputVCFIndex = indexBaseline.index,
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
-                outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf",
+                outputPath = unit.outputPrefix + "_baseline_normalizedCalls.vcf.gz",
+                filterExpression = filterExpression,
                 dockerImage = dockerImages["vt"]
-        }
-
-        call samtools.BgzipAndIndex as indexBaselineVcf {
-            input:
-                inputFile = normalizeAndDecomposeBaseline.outputVcf,
-                outputDir = unit.outputPrefix,
-                type = "vcf",
-                dockerImage = dockerImages["tabix"]
         }
 
         # Normalize and decompose the call vcf. Otherwise select variants will
@@ -102,26 +99,18 @@ workflow ClinicalValidation {
                 inputVCFIndex = indexCall.index,
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
-                outputPath = unit.outputPrefix + "_normalizedCalls.vcf",
+                outputPath = unit.outputPrefix + "_normalizedCalls.vcf.gz",
+                filterExpression = filterExpression,
                 dockerImage = dockerImages["vt"]
         }
-
-        call samtools.BgzipAndIndex as indexNormalizedCall{
-            input:
-                inputFile = normalizeAndDecomposeCall.outputVcf,
-                outputDir = unit.outputPrefix,
-                type = "vcf",
-                dockerImage = dockerImages["tabix"]
-        }
-
 
         call gatk.SelectVariants as selectSNPsCall {
             input:
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexNormalizedCall.compressed,
-                inputVcfIndex = indexNormalizedCall.index,
+                inputVcf = normalizeAndDecomposeCall.outputVcf,
+                inputVcfIndex = normalizeAndDecomposeCall.outputVcfIndex,
                 selectTypeToInclude = "SNP",
                 outputPath = unit.outputPrefix + "/calledSnps.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -133,8 +122,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexNormalizedCall.compressed,
-                inputVcfIndex = indexNormalizedCall.index,
+                inputVcf = normalizeAndDecomposeCall.outputVcf,
+                inputVcfIndex = normalizeAndDecomposeCall.outputVcfIndex,
                 selectTypeToInclude = "INDEL",
                 outputPath = unit.outputPrefix + "/calledIndels.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -146,8 +135,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexBaselineVcf.compressed,
-                inputVcfIndex = indexBaselineVcf.index,
+                inputVcf = normalizeAndDecomposeBaseline.outputVcf,
+                inputVcfIndex = normalizeAndDecomposeBaseline.outputVcfIndex,
                 selectTypeToInclude = "SNP",
                 outputPath = unit.outputPrefix + "/baselineSnps.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -159,8 +148,8 @@ workflow ClinicalValidation {
                 referenceFasta = referenceFasta,
                 referenceFastaFai = referenceFastaFai,
                 referenceFastaDict = referenceFastaDict,
-                inputVcf = indexBaselineVcf.compressed,
-                inputVcfIndex = indexBaselineVcf.index,
+                inputVcf = normalizeAndDecomposeBaseline.outputVcf,
+                inputVcfIndex = normalizeAndDecomposeBaseline.outputVcfIndex,
                 selectTypeToInclude = "INDEL",
                 outputPath = unit.outputPrefix + "/baselineIndels.vcf.gz",
                 intervals = select_all([highConfidenceIntervals]),
@@ -258,15 +247,15 @@ workflow ClinicalValidation {
         Array[File] indelStats = flatten(evalIndels.allStats)
         Array[File] SNPStats = flatten(evalSNPs.allStats)
 
-        Array[File] normalizedBaselineVcf = indexBaselineVcf.compressed
-        Array[File] normalizedBaselineVcfIndex = indexBaselineVcf.index
+        Array[File] normalizedBaselineVcf = normalizeAndDecomposeBaseline.outputVcf
+        Array[File] normalizedBaselineVcfIndex = normalizeAndDecomposeBaseline.outputVcfIndex
         Array[File] BaselineIndelVcf = selectIndelsBaseline.outputVcf
         Array[File] BaselineIndelVcfIndex = selectIndelsBaseline.outputVcfIndex
         Array[File] BaselineSNPVcf = selectSNPsBaseline.outputVcf
         Array[File] BaselineSNPVcfIndex = selectSNPsBaseline.outputVcfIndex
 
-        Array[File] normalizedVcf = indexNormalizedCall.compressed
-        Array[File] normalizedVcfIndex = indexNormalizedCall.index
+        Array[File] normalizedVcf = normalizeAndDecomposeCall.outputVcf
+        Array[File] normalizedVcfIndex = normalizeAndDecomposeBaseline.outputVcfIndex
         Array[File] indelVcf = selectIndelsCall.outputVcf
         Array[File] indelVcfIndex = selectIndelsCall.outputVcfIndex
         Array[File] SNPVcf = selectSNPsCall.outputVcf
@@ -295,6 +284,7 @@ workflow ClinicalValidation {
         validationUnit: {description: "Struct containing the call and baseline VCF files for each sample", category: "required"}
         dockerImages: {description: "The docker images used.", category: "advanced"}
         vepCacheTar: {description: "A tarball of a VEP cache to be used to annotate differences.", category: "common"}
+        filterExpression: {description: "Which variants to include. See https://genome.sph.umich.edu/wiki/Vt#Filters for valid expressions.", category: "common"}
     }
 }
 
